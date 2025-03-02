@@ -51,7 +51,7 @@ module webApiDeployment './core/appservice-deployment.bicep' = {
     appServiceName: webAppFree.outputs.app.name
     repoURL: 'https://github.com/vive-there/eShopOnWeb.git'
     branch: 'main'
-    projectName: './src/PublicApi/PublicApi.csproj'
+    projectName: 'src/PublicApi/PublicApi.csproj'
   }
 }
 

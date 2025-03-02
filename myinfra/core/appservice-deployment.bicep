@@ -17,6 +17,9 @@ resource appService 'Microsoft.Web/sites@2024-04-01' existing = {
 resource appServiceDeployment 'Microsoft.Web/sites/sourcecontrols@2024-04-01' = {
   parent: appService
   name: 'web'
+  dependsOn: [
+    appService
+  ]
   properties: {
     isManualIntegration: true
     branch: branch
@@ -27,12 +30,19 @@ resource appServiceDeployment 'Microsoft.Web/sites/sourcecontrols@2024-04-01' = 
 // update appsettings PROJECT with projectName
 resource appServiceUpdate 'Microsoft.Web/sites/config@2024-04-01' = {
   parent: appService
+  dependsOn: [
+    appService
+  ]  
   name: 'web'
   properties: {
     appSettings: [
       {
         name: 'PROJECT'
         value: projectName
+      }
+      {
+        name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
+        value: 'true'
       }
     ]
   }
