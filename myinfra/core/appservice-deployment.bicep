@@ -13,20 +13,6 @@ resource appService 'Microsoft.Web/sites@2024-04-01' existing = {
   name: appServiceName
 }
 
-
-resource appServiceDeployment 'Microsoft.Web/sites/sourcecontrols@2024-04-01' = {
-  parent: appService
-  name: 'web'
-  dependsOn: [
-    appService
-  ]
-  properties: {
-    isManualIntegration: true
-    branch: branch
-    repoUrl: repoURL
-  }
-}
-
 // update appsettings PROJECT with projectName
 resource appServiceUpdate 'Microsoft.Web/sites/config@2024-04-01' = {
   parent: appService
@@ -47,4 +33,20 @@ resource appServiceUpdate 'Microsoft.Web/sites/config@2024-04-01' = {
     ]
   }
 }
+
+
+resource appServiceDeployment 'Microsoft.Web/sites/sourcecontrols@2024-04-01' = {
+  parent: appService
+  name: 'web'
+  dependsOn: [
+    appService
+    appServiceUpdate
+  ]
+  properties: {
+    isManualIntegration: true
+    branch: branch
+    repoUrl: repoURL
+  }
+}
+
 
