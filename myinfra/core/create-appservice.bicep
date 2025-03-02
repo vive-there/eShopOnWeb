@@ -14,7 +14,6 @@ resource appService 'Microsoft.Web/sites@2024-04-01' = {
 
 output app object = {
   name: appService.name
-  state: appService.properties.state
   endpoint: appService.properties.defaultHostName
   id: appService.id
 } 

@@ -19,3 +19,10 @@ Priority, Main endpoint - Web 1, Failover Web 2
 ## DatabaseInMemory
 
 "UseOnlyInMemoryDatabase": true
+
+## Azure CLI
+
+```console
+az deployment sub create --name depl00001 --template-file main.bicep
+```
+

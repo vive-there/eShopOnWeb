@@ -44,7 +44,7 @@ module webAppFree './core/create-appservice.bicep' = {
   }
 }
 
-module webApiDeployment './core/appservice-deployment.bicep' = {
+module webApiDeployment './core/appservice-externalgit-manualintegration-deployment.bicep' = {
   name: 'webapp-depl-${suffix}'
   scope: resourceGroup(rgWeb.name)
   params:{
