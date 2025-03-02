@@ -1,0 +1,20 @@
+param appServiceName string
+param aspPlanName string
+
+resource appService 'Microsoft.Web/sites@2024-04-01' = {
+  name: appServiceName
+  location: resourceGroup().location
+  properties: {
+    httpsOnly: true
+    serverFarmId: resourceId('Microsoft.Web/serverfarms', aspPlanName)
+  }
+}
+
+
+
+output app object = {
+  name: appService.name
+  state: appService.properties.state
+  endpoint: appService.properties.defaultHostName
+  id: appService.id
+} 
