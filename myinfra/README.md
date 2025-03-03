@@ -6,9 +6,9 @@
 
 ## App Service eShopOnWeb Web
 
-Web 1 - West Europe, S1 , autoscaling, 2 slots, deployment local git
+Web 1 - West Europe, F1 , autoscaling, 2 slots, deployment local git
 
-Web 2 - North Europe, F1, deployment local git
+Web 2 - North Europe, S1, deployment local git
 
 PublicApp - West Europe, F1, deployment local git
 
@@ -23,6 +23,6 @@ Priority, Main endpoint - Web 1, Failover Web 2
 ## Azure CLI
 
 ```console
-az deployment sub create --name depl00001 --template-file main.bicep
+az deployment sub create --name depl00001 --template-file main.bicep --location westeurope
 ```
 

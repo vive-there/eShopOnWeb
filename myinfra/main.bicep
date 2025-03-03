@@ -1,11 +1,16 @@
 targetScope = 'subscription'
 
-var suffix = uniqueString(subscription().id)
+param epoch string = '$(dateTimeToEpoch(dateTimeAdd(utcNow(), \'P1Y\')))'
+
+var suffix = uniqueString(subscription().id, epoch)
 @description('The name of resource group to deploy Web App and API')
 var rgWebAndApiName = 'rg-web-and-api-${suffix}'
 @description('The name of resource group to deploy Web App')
 var rgWebName = 'rg-web-${suffix}'
 
+var publicApiServiceName = 'api-vivethere-${suffix}'
+var webAppFailoverServiceName = 'webapp-failover-vivethere-${suffix}'
+var webAppMainServiceName = 'webapp-vivethere-${suffix}'
 
 module rgWebAndApi './core/create-rg.bicep' = {
   name: rgWebAndApiName
@@ -15,7 +20,7 @@ module rgWebAndApi './core/create-rg.bicep' = {
   }
 }
 
-module rgWeb './core/create-rg.bicep' = {
+module rgWeb1 './core/create-rg.bicep' = {
   name: rgWebName
   params: {
     location: 'northeurope'
@@ -24,35 +29,134 @@ module rgWeb './core/create-rg.bicep' = {
 }
 
 
-// Create App Service Plan
-module aspFree './core/create-asp-windows.bicep' = {
-  name: 'asp-free-${suffix}'
-  scope: resourceGroup(rgWeb.name)
+// Create Public API App Service Plan
+module aspApi './core/create-asp-windows.bicep' = {
+  name: 'asp-api-vivethere-${suffix}'
+  scope: resourceGroup(rgWebAndApiName)
   params: {
-    aspName: 'asp-free-${suffix}'
-    skuName: 'F1'
+    aspName: 'asp-api-vivethere-${suffix}'
+    skuName: 'S1'
   }
+  dependsOn:[
+    rgWebAndApi
+  ]
 }
 
 
-module webAppFree './core/create-appservice.bicep' = {
-  name: 'webapp-free-${suffix}'
-  scope: resourceGroup(rgWeb.name)
+module publicApiService './core/create-appservice.bicep' = {
+  name: 'api-vivethere-${suffix}'
+  scope: resourceGroup(rgWebAndApiName)
   params: {
-    appServiceName: 'webapp-free-${suffix}'
-    aspPlanName: aspFree.outputs.asp.name
+    appServiceName: publicApiServiceName
+    aspPlanName: aspApi.outputs.asp.name
   }
+  dependsOn:[
+    rgWebAndApi
+  ]  
 }
 
 module webApiDeployment './core/appservice-externalgit-manualintegration-deployment.bicep' = {
-  name: 'webapp-depl-${suffix}'
-  scope: resourceGroup(rgWeb.name)
+  name: 'api-depl-${suffix}'
+  scope: resourceGroup(rgWebAndApiName)
   params:{
-    appServiceName: webAppFree.outputs.app.name
+    appServiceName: publicApiService.outputs.app.name
     repoURL: 'https://github.com/vive-there/eShopOnWeb.git'
     branch: 'main'
     projectName: 'src/PublicApi/PublicApi.csproj'
   }
+  dependsOn:[
+    rgWebAndApi
+  ]  
+}
+
+// Create WebApp Failover ASP
+module aspWebAppFailoverAsp './core/create-asp-windows.bicep' = {
+  name: 'asp-webapp-failover-${suffix}'
+  scope: resourceGroup(rgWebAndApiName)
+  params: {
+    aspName: 'asp-webapp-failover-${suffix}'
+    skuName: 'S1'
+  }
+  dependsOn:[
+    rgWebAndApi
+  ]  
+}
+
+module webAppFailoverService './core/create-appservice.bicep' = {
+  name: 'webapp-failover-${suffix}'
+  scope: resourceGroup(rgWebAndApiName)
+  params: {
+    appServiceName: webAppFailoverServiceName
+    aspPlanName: aspWebAppFailoverAsp.outputs.asp.name
+  }
+  dependsOn:[
+    rgWebAndApi
+  ]  
 }
 
 
+module webAppFailoverDeployment './core/appservice-externalgit-manualintegration-deployment.bicep' = {
+  name: 'webappfailover-depl-${suffix}'
+  scope: resourceGroup(rgWebAndApiName)
+  params:{
+    appServiceName: webAppFailoverService.outputs.app.name
+    repoURL: 'https://github.com/vive-there/eShopOnWeb.git'
+    branch: 'main'
+    projectName: 'src/Web/Web.csproj'
+  }
+  dependsOn:[
+    rgWebAndApi
+  ]  
+}
+
+
+module apiAppsettings './core/set-appsettings.bicep' = {
+  scope: resourceGroup(rgWebAndApiName)
+  name: 'apiAppsettingsDeploy'
+  dependsOn: [
+    rgWebAndApi
+  ]
+  params: {
+    appServiceName: publicApiService.outputs.app.name
+    appSettings: [
+      {
+        name: 'baseUrls__apiBase'
+        value: 'https://${publicApiService.outputs.app.defaultHostName}/'
+      }
+      {
+        name: 'baseUrls__webBase'
+        value: 'https://${webAppFailoverService.outputs.app.defaultHostName}/'
+      }
+      {
+        name: 'UseOnlyInMemoryDatabase'
+        value: true
+      }
+    ]
+  }
+}
+
+
+module webAppFailoverServiceAppsettings './core/set-appsettings.bicep' = {
+  scope: resourceGroup(rgWebAndApiName)
+  name: 'webAppFailoverServiceAppsettingsDeploy'
+  dependsOn: [
+    rgWebAndApi
+  ]
+  params: {
+    appServiceName: webAppFailoverService.outputs.app.name
+    appSettings: [
+      {
+        name: 'baseUrls__apiBase'
+        value: 'https://${publicApiService.outputs.app.defaultHostName}/'
+      }
+      {
+        name: 'baseUrls__webBase'
+        value: 'https://${webAppFailoverService.outputs.app.defaultHostName}/'
+      }
+      {
+        name: 'UseOnlyInMemoryDatabase'
+        value: true
+      }
+    ]
+  }
+}
