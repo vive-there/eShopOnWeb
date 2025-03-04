@@ -1,6 +1,6 @@
 targetScope = 'subscription'
 
-param epoch string = '$(dateTimeToEpoch(dateTimeAdd(utcNow(), \'P1Y\')))'
+param epoch string = '${dateTimeToEpoch(dateTimeAdd(utcNow(), 'P1Y'))}'
 
 var suffix = uniqueString(subscription().id, epoch)
 @description('The name of resource group to deploy Web App and API')
@@ -55,20 +55,6 @@ module publicApiService './core/create-appservice.bicep' = {
   ]  
 }
 
-module webApiDeployment './core/appservice-externalgit-manualintegration-deployment.bicep' = {
-  name: 'api-depl-${suffix}'
-  scope: resourceGroup(rgWebAndApiName)
-  params:{
-    appServiceName: publicApiService.outputs.app.name
-    repoURL: 'https://github.com/vive-there/eShopOnWeb.git'
-    branch: 'main'
-    projectName: 'src/PublicApi/PublicApi.csproj'
-  }
-  dependsOn:[
-    rgWebAndApi
-  ]  
-}
-
 // Create WebApp Failover ASP
 module aspWebAppFailoverAsp './core/create-asp-windows.bicep' = {
   name: 'asp-webapp-failover-${suffix}'
@@ -94,6 +80,54 @@ module webAppFailoverService './core/create-appservice.bicep' = {
   ]  
 }
 
+module apiAppsettings './core/set-appsettings.bicep' = {
+  scope: resourceGroup(rgWebAndApiName)
+  name: 'apiAppsettingDeploy'
+  params: {
+    appServiceName: publicApiServiceName
+    currentAppSettings: publicApiService.outputs.app.currentAppSettings
+    appSettings: {
+      PROJECT: 'src/PublicApi/PublicApi.csproj'
+      SCM_DO_BUILD_DURING_DEPLOYMENT: 'true'      
+      baseUrls__apiBase: 'https://${publicApiService.outputs.app.defaultHostName}/'
+      baseUrls__webBase: 'https://${webAppFailoverService.outputs.app.defaultHostName}/'
+    }
+  }
+  dependsOn:[
+    rgWebAndApi
+  ]   
+}
+
+
+module webAppFailoverServiceAppsettings './core/set-appsettings.bicep' = {
+  scope: resourceGroup(rgWebAndApiName)
+  name: 'webAppFailoverServiceAppsettingsDeploy'
+  params: {
+    appServiceName: webAppFailoverServiceName
+    currentAppSettings: webAppFailoverService.outputs.app.currentAppSettings
+    appSettings: {
+      PROJECT: 'src/Web/Web.csproj'
+      SCM_DO_BUILD_DURING_DEPLOYMENT: 'true'      
+      ASPNETCORE_ENVIRONMENT: 'UseInMemoryDb'
+      baseUrls__apiBase: 'https://${publicApiService.outputs.app.defaultHostName}/'
+      baseUrls__webBase: 'https://${webAppFailoverService.outputs.app.defaultHostName}/'
+    }
+  }
+}
+
+
+module webApiDeployment './core/appservice-externalgit-manualintegration-deployment.bicep' = {
+  name: 'api-depl-${suffix}'
+  scope: resourceGroup(rgWebAndApiName)
+  params:{
+    appServiceName: publicApiService.outputs.app.name
+    repoURL: 'https://github.com/vive-there/eShopOnWeb.git'
+    branch: 'main'
+  }
+  dependsOn:[
+    apiAppsettings
+  ]  
+}
 
 module webAppFailoverDeployment './core/appservice-externalgit-manualintegration-deployment.bicep' = {
   name: 'webappfailover-depl-${suffix}'
@@ -102,61 +136,9 @@ module webAppFailoverDeployment './core/appservice-externalgit-manualintegration
     appServiceName: webAppFailoverService.outputs.app.name
     repoURL: 'https://github.com/vive-there/eShopOnWeb.git'
     branch: 'main'
-    projectName: 'src/Web/Web.csproj'
   }
   dependsOn:[
-    rgWebAndApi
+    webAppFailoverServiceAppsettings
   ]  
 }
 
-
-module apiAppsettings './core/set-appsettings.bicep' = {
-  scope: resourceGroup(rgWebAndApiName)
-  name: 'apiAppsettingsDeploy'
-  dependsOn: [
-    rgWebAndApi
-  ]
-  params: {
-    appServiceName: publicApiService.outputs.app.name
-    appSettings: [
-      {
-        name: 'baseUrls__apiBase'
-        value: 'https://${publicApiService.outputs.app.defaultHostName}/'
-      }
-      {
-        name: 'baseUrls__webBase'
-        value: 'https://${webAppFailoverService.outputs.app.defaultHostName}/'
-      }
-      {
-        name: 'UseOnlyInMemoryDatabase'
-        value: true
-      }
-    ]
-  }
-}
-
-
-module webAppFailoverServiceAppsettings './core/set-appsettings.bicep' = {
-  scope: resourceGroup(rgWebAndApiName)
-  name: 'webAppFailoverServiceAppsettingsDeploy'
-  dependsOn: [
-    rgWebAndApi
-  ]
-  params: {
-    appServiceName: webAppFailoverService.outputs.app.name
-    appSettings: [
-      {
-        name: 'baseUrls__apiBase'
-        value: 'https://${publicApiService.outputs.app.defaultHostName}/'
-      }
-      {
-        name: 'baseUrls__webBase'
-        value: 'https://${webAppFailoverService.outputs.app.defaultHostName}/'
-      }
-      {
-        name: 'UseOnlyInMemoryDatabase'
-        value: true
-      }
-    ]
-  }
-}

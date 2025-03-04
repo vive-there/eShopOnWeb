@@ -2,7 +2,8 @@
 param appServiceName string
 
 @description('Array of appsettings')
-param appSettings array
+param appSettings object
+param currentAppSettings object
 
 resource appService 'Microsoft.Web/sites@2024-04-01' existing = {
   name: appServiceName
@@ -10,11 +11,6 @@ resource appService 'Microsoft.Web/sites@2024-04-01' existing = {
 
 resource appServiceUpdate 'Microsoft.Web/sites/config@2024-04-01' = {
   parent: appService
-  dependsOn: [
-    appService
-  ]  
-  name: 'web'
-  properties: {
-    appSettings: appSettings
-  }
+  name: 'appsettings'
+  properties: union( currentAppSettings , appSettings)
 }
