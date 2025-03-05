@@ -23,7 +23,7 @@ Priority, Main endpoint - Web 1, Failover Web 2
 ## Azure CLI
 
 ```console
-az deployment sub create --name depl00001 --template-file main.bicep --location westeurope
+az deployment sub create --name depl00001 --template-file main.bicep --location westeurope --parameters aspSku=F1
 ```
 
 

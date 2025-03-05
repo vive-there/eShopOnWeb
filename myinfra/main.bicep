@@ -1,6 +1,13 @@
 targetScope = 'subscription'
 
 param epoch string = '${dateTimeToEpoch(dateTimeAdd(utcNow(), 'P1Y'))}'
+@allowed([
+  'F1'
+  'B1'
+  'S1'
+  'P0V3'
+])
+param aspSku string
 
 var suffix = uniqueString(subscription().id, epoch)
 @description('The name of resource group to deploy Web App and API')
@@ -35,7 +42,7 @@ module aspApi './core/create-asp-windows.bicep' = {
   scope: resourceGroup(rgWebAndApiName)
   params: {
     aspName: 'asp-api-vivethere-${suffix}'
-    skuName: 'S1'
+    skuName: 'F1'
   }
   dependsOn:[
     rgWebAndApi
@@ -61,7 +68,7 @@ module aspWebAppFailoverAsp './core/create-asp-windows.bicep' = {
   scope: resourceGroup(rgWebAndApiName)
   params: {
     aspName: 'asp-webapp-failover-${suffix}'
-    skuName: 'S1'
+    skuName: 'F1'
   }
   dependsOn:[
     rgWebAndApi
@@ -88,7 +95,7 @@ module apiAppsettings './core/set-appsettings.bicep' = {
     currentAppSettings: publicApiService.outputs.app.currentAppSettings
     appSettings: {
       PROJECT: 'src/PublicApi/PublicApi.csproj'
-      SCM_DO_BUILD_DURING_DEPLOYMENT: 'true'      
+      //SCM_DO_BUILD_DURING_DEPLOYMENT: 'true'      
       baseUrls__apiBase: 'https://${publicApiService.outputs.app.defaultHostName}/'
       baseUrls__webBase: 'https://${webAppFailoverService.outputs.app.defaultHostName}/'
     }
@@ -107,7 +114,7 @@ module webAppFailoverServiceAppsettings './core/set-appsettings.bicep' = {
     currentAppSettings: webAppFailoverService.outputs.app.currentAppSettings
     appSettings: {
       PROJECT: 'src/Web/Web.csproj'
-      SCM_DO_BUILD_DURING_DEPLOYMENT: 'true'      
+      //SCM_DO_BUILD_DURING_DEPLOYMENT: 'true'      
       ASPNETCORE_ENVIRONMENT: 'UseInMemoryDb'
       baseUrls__apiBase: 'https://${publicApiService.outputs.app.defaultHostName}/'
       baseUrls__webBase: 'https://${webAppFailoverService.outputs.app.defaultHostName}/'
@@ -116,29 +123,29 @@ module webAppFailoverServiceAppsettings './core/set-appsettings.bicep' = {
 }
 
 
-module webApiDeployment './core/appservice-externalgit-manualintegration-deployment.bicep' = {
-  name: 'api-depl-${suffix}'
-  scope: resourceGroup(rgWebAndApiName)
-  params:{
-    appServiceName: publicApiService.outputs.app.name
-    repoURL: 'https://github.com/vive-there/eShopOnWeb.git'
-    branch: 'main'
-  }
-  dependsOn:[
-    apiAppsettings
-  ]  
-}
+// module webApiDeployment './core/appservice-externalgit-manualintegration-deployment.bicep' = {
+//   name: 'api-depl-${suffix}'
+//   scope: resourceGroup(rgWebAndApiName)
+//   params:{
+//     appServiceName: publicApiService.outputs.app.name
+//     repoURL: 'https://github.com/vive-there/eShopOnWeb.git'
+//     branch: 'main'
+//   }
+//   dependsOn:[
+//     apiAppsettings
+//   ]  
+// }
 
-module webAppFailoverDeployment './core/appservice-externalgit-manualintegration-deployment.bicep' = {
-  name: 'webappfailover-depl-${suffix}'
-  scope: resourceGroup(rgWebAndApiName)
-  params:{
-    appServiceName: webAppFailoverService.outputs.app.name
-    repoURL: 'https://github.com/vive-there/eShopOnWeb.git'
-    branch: 'main'
-  }
-  dependsOn:[
-    webAppFailoverServiceAppsettings
-  ]  
-}
+// module webAppFailoverDeployment './core/appservice-externalgit-manualintegration-deployment.bicep' = {
+//   name: 'webappfailover-depl-${suffix}'
+//   scope: resourceGroup(rgWebAndApiName)
+//   params:{
+//     appServiceName: webAppFailoverService.outputs.app.name
+//     repoURL: 'https://github.com/vive-there/eShopOnWeb.git'
+//     branch: 'main'
+//   }
+//   dependsOn:[
+//     webAppFailoverServiceAppsettings
+//   ]  
+// }
 
