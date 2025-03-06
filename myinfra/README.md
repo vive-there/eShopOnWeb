@@ -26,6 +26,8 @@ Priority, Main endpoint - Web 1, Failover Web 2
 az deployment sub create --name depl00001 --template-file main.bicep --location westeurope --parameters aspSku=F1
 ```
 
+az deployment group create --name deplapp002 -g <resource Group> --template-file deploy_app.bicep --parameters appServiceName=<app service name>
+
 
 https://blog.dotnetstudio.nl/posts/2021/04/merge-appsettings-with-bicep/
 

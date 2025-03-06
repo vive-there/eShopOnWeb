@@ -42,7 +42,7 @@ module aspApi './core/create-asp-windows.bicep' = {
   scope: resourceGroup(rgWebAndApiName)
   params: {
     aspName: 'asp-api-vivethere-${suffix}'
-    skuName: 'F1'
+    skuName: aspSku
   }
   dependsOn:[
     rgWebAndApi
@@ -68,7 +68,7 @@ module aspWebAppFailoverAsp './core/create-asp-windows.bicep' = {
   scope: resourceGroup(rgWebAndApiName)
   params: {
     aspName: 'asp-webapp-failover-${suffix}'
-    skuName: 'F1'
+    skuName: aspSku
   }
   dependsOn:[
     rgWebAndApi
@@ -87,15 +87,41 @@ module webAppFailoverService './core/create-appservice.bicep' = {
   ]  
 }
 
+// Create WebApp Failover ASP
+module aspWebAppMainAsp './core/create-asp-windows.bicep' = {
+  name: 'asp-webapp-main-${suffix}'
+  scope: resourceGroup(rgWebName)
+  params: {
+    aspName: 'asp-webapp-main-${suffix}'
+    skuName: aspSku
+  }
+  dependsOn:[
+    rgWeb1
+  ]  
+}
+
+module webAppMainService './core/create-appservice.bicep' = {
+  name: 'webapp-main-${suffix}'
+  scope: resourceGroup(rgWebName)
+  params: {
+    appServiceName: webAppMainServiceName
+    aspPlanName: aspWebAppMainAsp.outputs.asp.name
+  }
+  dependsOn:[
+    rgWeb1
+  ]  
+}
+
+
 module apiAppsettings './core/set-appsettings.bicep' = {
   scope: resourceGroup(rgWebAndApiName)
-  name: 'apiAppsettingDeploy'
+  name: 'apiAppsettingDeploy${suffix}'
   params: {
     appServiceName: publicApiServiceName
     currentAppSettings: publicApiService.outputs.app.currentAppSettings
     appSettings: {
       PROJECT: 'src/PublicApi/PublicApi.csproj'
-      //SCM_DO_BUILD_DURING_DEPLOYMENT: 'true'      
+      SCM_DO_BUILD_DURING_DEPLOYMENT: 'true'      
       baseUrls__apiBase: 'https://${publicApiService.outputs.app.defaultHostName}/'
       baseUrls__webBase: 'https://${webAppFailoverService.outputs.app.defaultHostName}/'
     }
@@ -108,16 +134,31 @@ module apiAppsettings './core/set-appsettings.bicep' = {
 
 module webAppFailoverServiceAppsettings './core/set-appsettings.bicep' = {
   scope: resourceGroup(rgWebAndApiName)
-  name: 'webAppFailoverServiceAppsettingsDeploy'
+  name: 'webAppFailoverServiceAppsettingsDeploy${suffix}'
   params: {
     appServiceName: webAppFailoverServiceName
     currentAppSettings: webAppFailoverService.outputs.app.currentAppSettings
     appSettings: {
       PROJECT: 'src/Web/Web.csproj'
-      //SCM_DO_BUILD_DURING_DEPLOYMENT: 'true'      
-      ASPNETCORE_ENVIRONMENT: 'UseInMemoryDb'
+      SCM_DO_BUILD_DURING_DEPLOYMENT: 'true'      
       baseUrls__apiBase: 'https://${publicApiService.outputs.app.defaultHostName}/'
       baseUrls__webBase: 'https://${webAppFailoverService.outputs.app.defaultHostName}/'
+    }
+  }
+}
+
+
+module webAppMainServiceAppsettings './core/set-appsettings.bicep' = {
+  scope: resourceGroup(rgWebName)
+  name: 'webAppMainServiceAppsettingsDeploy${suffix}'
+  params: {
+    appServiceName: webAppMainServiceName
+    currentAppSettings: webAppMainService.outputs.app.currentAppSettings
+    appSettings: {
+      PROJECT: 'src/Web/Web.csproj'
+      SCM_DO_BUILD_DURING_DEPLOYMENT: 'true'      
+      baseUrls__apiBase: 'https://${publicApiService.outputs.app.defaultHostName}/'
+      baseUrls__webBase: 'https://${webAppMainService.outputs.app.defaultHostName}/'
     }
   }
 }
