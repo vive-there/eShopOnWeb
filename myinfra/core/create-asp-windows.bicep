@@ -4,7 +4,14 @@
 param aspName string
 
 @description('App Service Plan SKU Name')
-@allowed(['F1', 'B1', 'S1', 'P0V3'])
+@allowed(
+  [
+   'F1'
+   'B1'
+   'S1'
+   'S2'
+   'P0V3'
+  ])
 param skuName string
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2024-04-01' = {

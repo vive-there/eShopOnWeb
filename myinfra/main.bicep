@@ -5,9 +5,13 @@ param epoch string = '${dateTimeToEpoch(dateTimeAdd(utcNow(), 'P1Y'))}'
   'F1'
   'B1'
   'S1'
+  'S2'
   'P0V3'
 ])
 param aspSku string
+
+@description('Create staging slot for Web App')
+param createStagingSlot bool = false
 
 var suffix = uniqueString(subscription().id, epoch)
 @description('The name of resource group to deploy Web App and API')
@@ -121,9 +125,11 @@ module apiAppsettings './core/set-appsettings.bicep' = {
     currentAppSettings: publicApiService.outputs.app.currentAppSettings
     appSettings: {
       PROJECT: 'src/PublicApi/PublicApi.csproj'
-      SCM_DO_BUILD_DURING_DEPLOYMENT: 'true'      
+      SCM_DO_BUILD_DURING_DEPLOYMENT: 'false'      
+      WEBSITE_RUN_FROM_PACKAGE: '1'
       baseUrls__apiBase: 'https://${publicApiService.outputs.app.defaultHostName}/'
       baseUrls__webBase: 'https://${webAppFailoverService.outputs.app.defaultHostName}/'
+      UseOnlyInMemoryDatabase: true
     }
   }
   dependsOn:[
@@ -139,10 +145,12 @@ module webAppFailoverServiceAppsettings './core/set-appsettings.bicep' = {
     appServiceName: webAppFailoverServiceName
     currentAppSettings: webAppFailoverService.outputs.app.currentAppSettings
     appSettings: {
-      PROJECT: 'src/Web/Web.csproj'
-      SCM_DO_BUILD_DURING_DEPLOYMENT: 'true'      
+      //PROJECT: 'src/Web/Web.csproj'
+      SCM_DO_BUILD_DURING_DEPLOYMENT: 'false'      
+      WEBSITE_RUN_FROM_PACKAGE: '1'
       baseUrls__apiBase: 'https://${publicApiService.outputs.app.defaultHostName}/'
       baseUrls__webBase: 'https://${webAppFailoverService.outputs.app.defaultHostName}/'
+      UseOnlyInMemoryDatabase: true
     }
   }
 }
@@ -155,15 +163,75 @@ module webAppMainServiceAppsettings './core/set-appsettings.bicep' = {
     appServiceName: webAppMainServiceName
     currentAppSettings: webAppMainService.outputs.app.currentAppSettings
     appSettings: {
-      PROJECT: 'src/Web/Web.csproj'
-      SCM_DO_BUILD_DURING_DEPLOYMENT: 'true'      
+      //PROJECT: 'src/Web/Web.csproj'
+      SCM_DO_BUILD_DURING_DEPLOYMENT: 'false'      
+      WEBSITE_RUN_FROM_PACKAGE: '1'
       baseUrls__apiBase: 'https://${publicApiService.outputs.app.defaultHostName}/'
       baseUrls__webBase: 'https://${webAppMainService.outputs.app.defaultHostName}/'
+      UseOnlyInMemoryDatabase: true
     }
   }
 }
 
+module stickyAppSettings './core/add-sticky-appsettings.bicep' = {
+  scope: resourceGroup(rgWebName)
+  name: 'stickyAppSettingsDeploy${suffix}'
+  params: {
+    appServiceName: webAppMainServiceName
+    stickyAppSettingNames: [
+      'baseUrls__apiBase'
+      'baseUrls__webBase'
+      'UseOnlyInMemoryDatabase'
+      'WEBSITE_RUN_FROM_PACKAGE'
+      'SCM_DO_BUILD_DURING_DEPLOYMENT'
+    ]
+  }
+  dependsOn:[
+    webAppMainServiceAppsettings
+  ]  
+}
 
+// Create staging slot if createStagingSlot is true
+
+module webAppSlot './core/add-appservice-slot.bicep' = if(createStagingSlot) {
+  name: 'webapp-slot-${suffix}'
+  scope: resourceGroup(rgWebName)
+  params: {
+    appServiceName: webAppMainService.outputs.app.name
+    slotName: 'staging'
+    appSettings: [
+      // {
+      //   name: 'PROJECT'
+      //   value: 'src/Web/Web.csproj'
+      // }
+      {
+        name: 'baseUrls__apiBase'
+        value: 'https://${publicApiService.outputs.app.defaultHostName}/'
+      } 
+      {
+        name: 'baseUrls__webBase'
+        value: 'https://${webAppMainServiceName}-staging.azurewebsites.net/'
+      }            
+      {
+        name: 'UseOnlyInMemoryDatabase'
+        value: 'true'
+      }
+      {
+        name: 'WEBSITE_RUN_FROM_PACKAGE'
+        value: '1'
+      }
+      {
+        name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
+        value: 'false'
+      }
+    ]
+  }
+  dependsOn:[
+    webAppMainServiceAppsettings
+  ]  
+}
+
+// no deployment
 // module webApiDeployment './core/appservice-externalgit-manualintegration-deployment.bicep' = {
 //   name: 'api-depl-${suffix}'
 //   scope: resourceGroup(rgWebAndApiName)
@@ -190,3 +258,14 @@ module webAppMainServiceAppsettings './core/set-appsettings.bicep' = {
 //   ]  
 // }
 
+
+output mainOutput object = {
+  rgWebAndApiName: rgWebAndApiName
+  rgWebName: rgWebName
+  publicApiServiceName: publicApiServiceName
+  webAppFailoverServiceName: webAppFailoverServiceName
+  webAppMainServiceName: webAppMainServiceName
+  publicApiService: publicApiService.outputs.app.name
+  webAppFailoverId: webAppFailoverService.outputs.app.id
+  webAppMainId: webAppMainService.outputs.app.id
+}

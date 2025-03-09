@@ -7,17 +7,9 @@ resource appService 'Microsoft.Web/sites@2024-04-01' = {
   properties: {
     httpsOnly: true
     serverFarmId: resourceId('Microsoft.Web/serverfarms', aspPlanName)
-    siteConfig: {
-      netFrameworkVersion: ''
-      appSettings: [
-        {
-          name: 'UseOnlyInMemoryDatabase'
-          value: 'true'
-        }
-      ]
-    }
   }
 }
+
 
 output app object = {
   name: appService.name
