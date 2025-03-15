@@ -16,7 +16,7 @@ if (-not $projectName) {
 }
 
 
-$solution="C:\Users\vadym\source\repos\eShopOnWeb"
+$solution="C:\Users\vadym_tarasov\source\repos\eShopOnWeb"
 $projectPath = Join-Path -Path $solution -ChildPath $project
 
 $publishFolder="$solution\src\$projectName\bin\publish"

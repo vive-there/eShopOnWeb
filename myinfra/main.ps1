@@ -2,7 +2,7 @@ $deployment = az deployment sub create `
 --name depl00001 `
 --template-file main.bicep `
 --location westeurope `
---parameters aspSku=F1 createStagingSlot=false `
+--parameters aspSku=S1 createStagingSlot=false `
 --query "properties.outputs" `
 --output json
 
@@ -32,7 +32,7 @@ if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 $appZip = $appZipArray[-1]  # Get the latest element
-az webapp deploy --resource-group $rgWebAndApiName --name $publicApiServiceName --src-path $appZip
+az webapp deploy --resource-group $rgWebAndApiName --name $publicApiServiceName --src-path $appZip --type zip
 
 $webZipArray = .\dotnet_publish_web.ps1 -project "./src/Web/Web.csproj" -projectName "Web"
 if ($LASTEXITCODE -ne 0) {
@@ -40,8 +40,8 @@ if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 $webZip = $webZipArray[-1]  # Get the latest element
-az webapp deploy --resource-group $rgWebAndApiName --name $webAppFailoverServiceName --src-path $webZip
-az webapp deploy --resource-group $rgWebName --name $webAppMainServiceName --src-path $webZip
+az webapp deploy --resource-group $rgWebAndApiName --name $webAppFailoverServiceName --src-path $webZip --type zip
+az webapp deploy --resource-group $rgWebName --name $webAppMainServiceName --src-path $webZip --type zip
 
 $suffix = (Get-Date).ToString("yyyyMMddHHmmssffff")
 
