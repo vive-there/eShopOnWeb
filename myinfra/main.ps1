@@ -1,8 +1,19 @@
+param(
+    [string]$solutionPath
+)
+
+if (-not $solutionPath) {
+    Write-Information "usage: .\dotnet_publish_web.ps1 -solutionPath ""absolute path to \eShopOnWeb"" -project ""./src/Web/Web.csproj"" -projectName ""Web"""
+    Write-Error "project parameter is required"
+    exit 1
+}
+
+
 $deployment = az deployment sub create `
 --name depl00001 `
 --template-file main.bicep `
 --location westeurope `
---parameters aspSku=S1 createStagingSlot=false `
+--parameters aspSku=F1 createStagingSlot=false `
 --query "properties.outputs" `
 --output json
 
@@ -26,7 +37,7 @@ Write-Output "Web App Main Service Name: $webAppMainServiceName"
 Write-Output "Web App Failover Id: $webAppFailoverId"
 Write-Output "Web App Main Id: $webAppMainId"
 
-$appZipArray = .\dotnet_publish_web.ps1 -project "./src/PublicApi/PublicApi.csproj" -projectName "PublicApi"
+$appZipArray = .\dotnet_publish_web.ps1 -solutionPath $solutionPath -project "./src/PublicApi/PublicApi.csproj" -projectName "PublicApi"
 if ($LASTEXITCODE -ne 0) {
     Write-Error "dotnet_publish_web.ps1 failed for PublicApi"
     exit $LASTEXITCODE
@@ -34,7 +45,7 @@ if ($LASTEXITCODE -ne 0) {
 $appZip = $appZipArray[-1]  # Get the latest element
 az webapp deploy --resource-group $rgWebAndApiName --name $publicApiServiceName --src-path $appZip --type zip
 
-$webZipArray = .\dotnet_publish_web.ps1 -project "./src/Web/Web.csproj" -projectName "Web"
+$webZipArray = .\dotnet_publish_web.ps1 -solutionPath $solutionPath -project "./src/Web/Web.csproj" -projectName "Web"
 if ($LASTEXITCODE -ne 0) {
     Write-Error "dotnet_publish_web.ps1 failed for PublicApi"
     exit $LASTEXITCODE
@@ -44,6 +55,8 @@ az webapp deploy --resource-group $rgWebAndApiName --name $webAppFailoverService
 az webapp deploy --resource-group $rgWebName --name $webAppMainServiceName --src-path $webZip --type zip
 
 $suffix = (Get-Date).ToString("yyyyMMddHHmmssffff")
+
+exit 0
 
 az deployment group create `
 -g $rgWebName `

@@ -43,3 +43,8 @@ https://learn.microsoft.com/en-us/azure/app-service/deploy-run-package
 dotnet build ./src/Web/Web.csproj -c Release -o ./Out/WebBuild
 cd ./Out/WebBuild
 Compress-Archive -Path * -DestinationPath webdeploy.zip
+
+k6
+docker run --rm -v C:\Users\vadym\source\repos\eShopOnWeb\myinfra:/app -w /app grafana/k6 new mytest.js
+docker run --rm -i grafana/k6 run - <mytest.js
+

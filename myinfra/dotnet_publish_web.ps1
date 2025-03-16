@@ -1,25 +1,31 @@
 param(
     [string]$project,
-    [string]$projectName
+    [string]$projectName,
+    [string]$solutionPath
 )
 
+if (-not $solutionPath) {
+    Write-Information "usage: .\dotnet_publish_web.ps1 -solutionPath ""C:\Users\vadym_tarasov\source\repos\eShopOnWeb"" -project ""./src/Web/Web.csproj"" -projectName ""Web"""
+    Write-Error "solutionPath parameter is required"
+    exit 1
+}
+
 if (-not $project) {
-    Write-Information "usage: .\dotnet_publish_web.ps1 -project ""./src/Web/Web.csproj"" -projectName ""Web"""
+    Write-Information "usage: .\dotnet_publish_web.ps1 -solutionPath ""C:\Users\vadym_tarasov\source\repos\eShopOnWeb"" -project ""./src/Web/Web.csproj"" -projectName ""Web"""
     Write-Error "project parameter is required"
     exit 1
 }
 
 if (-not $projectName) {
-    Write-Information "usage: .\dotnet_publish_web.ps1 -project ""./src/Web/Web.csproj"" -projectName ""Web"""
+    Write-Information "usage: .\dotnet_publish_web.ps1  -solutionPath ""C:\Users\vadym_tarasov\source\repos\eShopOnWeb"" -project ""./src/Web/Web.csproj"" -projectName ""Web"""
     Write-Error "projectName parameter is required"
     exit 1
 }
 
 
-$solution="C:\Users\vadym_tarasov\source\repos\eShopOnWeb"
-$projectPath = Join-Path -Path $solution -ChildPath $project
+$projectPath = Join-Path -Path $solutionPath -ChildPath $project
 
-$publishFolder="$solution\src\$projectName\bin\publish"
+$publishFolder="$solutionPath\src\$projectName\bin\publish"
 $suffix = (Get-Date).ToString("yyyyMMddHHmmssffff")
 $zipFileLocation = "$publishFolder\$projectName-$suffix.zip"
 
