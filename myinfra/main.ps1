@@ -37,6 +37,8 @@ Write-Output "Web App Main Service Name: $webAppMainServiceName"
 Write-Output "Web App Failover Id: $webAppFailoverId"
 Write-Output "Web App Main Id: $webAppMainId"
 
+exit 0
+
 $appZipArray = .\dotnet_publish_web.ps1 -solutionPath $solutionPath -project "./src/PublicApi/PublicApi.csproj" -projectName "PublicApi"
 if ($LASTEXITCODE -ne 0) {
     Write-Error "dotnet_publish_web.ps1 failed for PublicApi"
@@ -56,6 +58,7 @@ az webapp deploy --resource-group $rgWebName --name $webAppMainServiceName --src
 
 $suffix = (Get-Date).ToString("yyyyMMddHHmmssffff")
 
+# do not create traffic manager profile
 exit 0
 
 az deployment group create `

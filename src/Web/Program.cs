@@ -21,6 +21,7 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.AddConsole();
+builder.Configuration.AddEnvironmentVariables();
 
 if (builder.Environment.IsDevelopment() || builder.Environment.EnvironmentName == "Docker" || (builder.Configuration["UseOnlyInMemoryDatabase"] ?? "")=="true" ){
     // Configure SQL Server (local)

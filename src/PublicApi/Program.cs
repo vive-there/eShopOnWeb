@@ -28,7 +28,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpoints();
 
 // Use to force loading of appsettings.json of test project
-builder.Configuration.AddConfigurationFile("appsettings.test.json");
+//builder.Configuration.AddConfigurationFile("appsettings.test.json");
 builder.Logging.AddConsole();
 
 Microsoft.eShopWeb.Infrastructure.Dependencies.ConfigureServices(builder.Configuration, builder.Services);
@@ -75,7 +75,9 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: CORS_POLICY,
         corsPolicyBuilder =>
         {
-            corsPolicyBuilder.WithOrigins(baseUrlConfig!.WebBase.Replace("host.docker.internal", "localhost").TrimEnd('/'));
+            corsPolicyBuilder.WithOrigins(baseUrlConfig!.WebBase.Replace("host.docker.internal", "localhost").TrimEnd('/'),
+                "localhost:44315",
+                baseUrlConfig.WebBase.Replace("https://","").TrimEnd('/'));
             corsPolicyBuilder.AllowAnyMethod();
             corsPolicyBuilder.AllowAnyHeader();
         });
@@ -176,6 +178,8 @@ app.MapControllers();
 app.MapEndpoints();
 
 app.Logger.LogInformation("LAUNCHING PublicApi");
+app.Logger.LogInformation($"API base {baseUrlConfig?.ApiBase}");
+app.Logger.LogInformation($"WEB Base {baseUrlConfig?.WebBase}");
 app.Run();
 
 public partial class Program { }
