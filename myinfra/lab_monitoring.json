@@ -149,5 +149,10 @@
             }
         }
     ],
-    "outputs": {}
+    "outputs": {
+        "webappName": {
+            "type": "string",
+            "value": "[variables('webappName')]"
+        }
+    }
 }

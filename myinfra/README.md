@@ -48,3 +48,5 @@ k6
 docker run --rm -v C:\Users\vadym\source\repos\eShopOnWeb\myinfra:/app -w /app grafana/k6 new mytest.js
 docker run --rm -i grafana/k6 run - <mytest.js
 
+
+.\lab_monitoring.ps1 C:\Users\Vadym_Tarasov\source\repos\eShopOnWeb
