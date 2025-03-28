@@ -95,12 +95,8 @@
                             "value": "[reference(resourceId('Microsoft.Insights/components', variables('aisName')), '2020-02-02').ConnectionString]"
                         },
                         {
-                            "name": "APPINSIGHTS_JAVASCRIPT_ENABLED",
-                            "value": "false"
-                        },
-                        {
-                            "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
-                            "value": "[reference(resourceId('Microsoft.Insights/components', variables('aisName')), '2020-02-02').InstrumentationKey]"
+                            "name":"XDT_MicrosoftApplicationInsights_Mode",
+                            "value": "recommended"
                         }
                     ]
                 }

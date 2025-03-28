@@ -27,10 +27,10 @@ using MinimalApi.Endpoint.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-#if !DEBUG
-// Add OpenTelemetry and configure it to use Azure Monitor.
-builder.Services.AddOpenTelemetry().UseAzureMonitor();
-#endif
+//#if !DEBUG
+//// Add OpenTelemetry and configure it to use Azure Monitor.
+//builder.Services.AddOpenTelemetry().UseAzureMonitor();
+//#endif
 
 builder.Services.AddEndpoints();
 
