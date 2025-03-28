@@ -46,8 +46,6 @@ k6
 docker run --rm -v C:\Users\vadym\source\repos\eShopOnWeb\myinfra:/app -w /app grafana/k6 new mytest.js
 docker run --rm -i grafana/k6 run - <mytest.js
 
-.\lab_monitoring.ps1 C:\Users\Vadym_Tarasov\source\repos\eShopOnWeb
-
 ## AppService Traning
 
 1. Open cmd and change dir to dir_to_your_repo\eShopOnWeb
@@ -111,3 +109,9 @@ docker run --rm -i grafana/k6 run - <mytest.js
     az group delete --name rg-web-and-api-RANDOM --no-wait --yes
     az group list -o table
   ```
+
+## AppService Monitoring
+
+```Console
+.\lab_monitoring.ps1 dir_to_your_repo\eShopOnWeb
+```

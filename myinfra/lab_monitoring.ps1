@@ -8,6 +8,8 @@ if (-not $solutionPath) {
     exit 1
 }
 
+Write-Host "Solution path: $solutionPath"
+
 $suffix=Get-Random -Minimum 1000 -Maximum 99999
 $rgName="rg-vivethere$suffix"
 
@@ -21,12 +23,12 @@ $deployment = az deployment group create `
 --query "properties.outputs" `
 --output json
 
-Write-Output $deployment
+Write-Information $deployment
 
 # # Parse the output
 $deploymentOutput = $deployment | ConvertFrom-Json
 
-Write-Output $deploymentOutput
+Write-Information $deploymentOutput
 
 $webappName = $deploymentOutput.webappName.value
 

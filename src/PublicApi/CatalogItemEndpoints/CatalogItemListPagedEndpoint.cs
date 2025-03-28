@@ -47,12 +47,12 @@ public class CatalogItemListPagedEndpoint : IEndpoint<IResult, ListPagedCatalogI
 
         if(request.PageIndex < 0)
         {
-            _appLogger.LogWarning("Method {Method}: Invalid PageIndex - {PageIndex}", nameof(CatalogItemListPagedEndpoint), request.PageIndex);
+            _appLogger.LogError("Method {Method}: Invalid PageIndex - {PageIndex}", nameof(CatalogItemListPagedEndpoint), request.PageIndex);
             throw new Exception("Cannot move further");
         }
         if (request.PageSize <= 0)
         {
-            _appLogger.LogWarning("Method {Method}: Invalid PageSize - {PageSize}", nameof(CatalogItemListPagedEndpoint), request.PageSize);
+            _appLogger.LogError("Method {Method}: Invalid PageSize - {PageSize}", nameof(CatalogItemListPagedEndpoint), request.PageSize);
             throw new Exception("Cannot move further");
         }
 
