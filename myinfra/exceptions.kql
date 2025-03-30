@@ -1,0 +1,8 @@
+let start=datetime(2025-03-30 08:30:00);
+let end=start + 1h;
+requests
+| where timestamp between ( start .. end)
+| where resultCode == 500
+| project timestamp, operation_Id, name, url, resultCode
+| join kind = inner exceptions on $left.operation_Id == $right.operation_Id
+| project  timestamp, name, url, resultCode, operation_Id, outerMessage, details

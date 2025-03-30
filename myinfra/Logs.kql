@@ -1,0 +1,7 @@
+AppRequests
+| where TimeGenerated >= ago(1h)
+| where ResultCode == 200
+| project TimeGenerated, OperationId, Name, ResultCode
+| join kind = inner AppTraces on OperationId
+| where Properties["Method"] == "CatalogItemListPagedEndpoint"
+| project TimeGenerated, OperationId, Name, ResultCode, Message, ClientCountryOrRegion, ClientType

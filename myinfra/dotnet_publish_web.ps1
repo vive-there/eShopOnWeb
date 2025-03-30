@@ -36,6 +36,15 @@ if (Test-Path $publishFolder) {
 }
 
 dotnet publish $projectPath -o $publishFolder -c Release
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "dotnet publish failed for $projectPath"
+    exit $LASTEXITCODE
+}
+
 Compress-Archive -Path "$publishFolder\*" -DestinationPath $zipFileLocation -Force
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Compress-Archive failed for $zipFileLocation"
+    exit $LASTEXITCODE
+}
 
 Write-Output $zipFileLocation

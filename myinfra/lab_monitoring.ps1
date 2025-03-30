@@ -19,7 +19,7 @@ $deployment = az deployment group create `
 --name deployment$suffix `
 --template-file .\lab_monitoring.json `
 -g $rgName `
---parameters suffix=$suffix `
+--parameters suffix=$suffix servicePlanSKU=F1 `
 --query "properties.outputs" `
 --output json
 
