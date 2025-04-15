@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Azure.Monitor.OpenTelemetry.AspNetCore;
+//using Azure.Monitor.OpenTelemetry.AspNetCore;
 using BlazorShared;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -161,6 +161,7 @@ if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
 }
 
+// comment this to view in Applicato Insights
 //app.UseMiddleware<ExceptionMiddleware>();
 
 app.UseHttpsRedirection();
