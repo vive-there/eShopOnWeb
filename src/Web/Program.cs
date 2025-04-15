@@ -17,6 +17,7 @@ using Microsoft.eShopWeb.Infrastructure.Identity;
 using Microsoft.eShopWeb.Web;
 using Microsoft.eShopWeb.Web.Configuration;
 using Microsoft.eShopWeb.Web.HealthChecks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -103,6 +104,11 @@ var baseUrlConfig = configSection.Get<BaseUrlConfiguration>();
 builder.Services.AddScoped<HttpClient>(s => new HttpClient
 {
     BaseAddress = new Uri(baseUrlConfig!.WebBase)
+});
+
+builder.Services.AddHttpClient("SalesFunction", client => {
+    client.BaseAddress = new Uri(builder.Configuration["SalesFunctionEndpoint"]);
+
 });
 
 // add blazor services
