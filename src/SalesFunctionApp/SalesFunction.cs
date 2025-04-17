@@ -20,7 +20,7 @@ namespace SalesFunctionApp;
 
 public class SalesFunction
 {
-    [Function("SalesFunction")]
+    [Function("OrderItemsReserver")]
     public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData req,
             FunctionContext executionContext)
     {
@@ -49,10 +49,9 @@ public class SalesFunction
             var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             var json = JsonObject.Parse(requestBody);
             
-            var invoiceData = json["invoice"];
             await containerClient.UploadBlobAsync(
-                $"invoice-{invoiceData["id"]}_{Guid.NewGuid().ToString("n")}.json",
-                new BinaryData(Encoding.UTF8.GetBytes(invoiceData.ToJsonString()))
+                $"invoice-{json["id"]}_{Guid.NewGuid().ToString("n")}.json",
+                new BinaryData(Encoding.UTF8.GetBytes(requestBody))
             );
 
             return req.CreateResponse(HttpStatusCode.OK);

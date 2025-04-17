@@ -14,6 +14,7 @@ using Microsoft.eShopWeb;
 using Microsoft.eShopWeb.ApplicationCore.Interfaces;
 using Microsoft.eShopWeb.Infrastructure.Data;
 using Microsoft.eShopWeb.Infrastructure.Identity;
+using Microsoft.eShopWeb.Infrastructure.Services;
 using Microsoft.eShopWeb.Web;
 using Microsoft.eShopWeb.Web.Configuration;
 using Microsoft.eShopWeb.Web.HealthChecks;
@@ -22,7 +23,9 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.AddConsole();
-builder.Configuration.AddEnvironmentVariables();
+builder.Configuration
+    .AddUserSecrets<Program>(optional: true)
+    .AddEnvironmentVariables();
 
 if (builder.Environment.IsDevelopment() || builder.Environment.EnvironmentName == "Docker" || (builder.Configuration["UseOnlyInMemoryDatabase"] ?? "")=="true" ){
     // Configure SQL Server (local)
@@ -101,15 +104,12 @@ builder.Services.Configure<BaseUrlConfiguration>(configSection);
 var baseUrlConfig = configSection.Get<BaseUrlConfiguration>();
 
 // Blazor Admin Required Services for Prerendering
-builder.Services.AddScoped<HttpClient>(s => new HttpClient
+builder.Services.AddHttpClient<OrderItemsReserver>(client => 
 {
-    BaseAddress = new Uri(baseUrlConfig!.WebBase)
+    Console.WriteLine($"OrderItemsReserverBase: {baseUrlConfig!.OrderItemsReserverBase}");
+    client.BaseAddress = new Uri(baseUrlConfig!.OrderItemsReserverBase);
 });
 
-builder.Services.AddHttpClient("SalesFunction", client => {
-    client.BaseAddress = new Uri(builder.Configuration["SalesFunctionEndpoint"]);
-
-});
 
 // add blazor services
 builder.Services.AddBlazoredLocalStorage();

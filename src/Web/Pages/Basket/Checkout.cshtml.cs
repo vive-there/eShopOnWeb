@@ -10,6 +10,8 @@ using Microsoft.eShopWeb.ApplicationCore.Exceptions;
 using Microsoft.eShopWeb.ApplicationCore.Interfaces;
 using Microsoft.eShopWeb.Infrastructure.Identity;
 using Microsoft.eShopWeb.Web.Interfaces;
+using Microsoft.eShopWeb.Infrastructure.Dto;
+using Microsoft.eShopWeb.Infrastructure.Services;
 
 namespace Microsoft.eShopWeb.Web.Pages.Basket;
 
@@ -19,6 +21,7 @@ public class CheckoutModel : PageModel
     private readonly IBasketService _basketService;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly IOrderService _orderService;
+    private readonly OrderItemsReserver _orderItemsReserver;
     private string? _username = null;
     private readonly IBasketViewModelService _basketViewModelService;
     private readonly IAppLogger<CheckoutModel> _logger;
@@ -27,11 +30,13 @@ public class CheckoutModel : PageModel
         IBasketViewModelService basketViewModelService,
         SignInManager<ApplicationUser> signInManager,
         IOrderService orderService,
+        OrderItemsReserver orderItemsReserver,
         IAppLogger<CheckoutModel> logger)
     {
         _basketService = basketService;
         _signInManager = signInManager;
         _orderService = orderService;
+        _orderItemsReserver = orderItemsReserver;
         _basketViewModelService = basketViewModelService;
         _logger = logger;
     }
@@ -59,25 +64,29 @@ public class CheckoutModel : PageModel
             var order = await _orderService.CreateOrderAsync(BasketModel.Id, new Address("123 Main St.", "Kent", "OH", "United States", "44240"));
             await _basketService.DeleteBasketAsync(BasketModel.Id);
 
-            var invoice = new { 
-               invoiceId = order.Id,
-               customerId = order.BuyerId,
-               orderedDate = order.OrderDate,
-               total = order.Total(),
-               items = order.OrderItems.Select(x=> new { 
-                 id = x.ItemOrdered.CatalogItemId,
-                 name = x.ItemOrdered.ProductName,
-                 unit = x.Units,
-                 unitPrice = x.UnitPrice,
-               }).ToArray(),
-               address = order.ShipToAddress
+            var invoice = new Invoice{ 
+               Id = order.Id,
+               CustomerId = order.BuyerId,
+               OrderedDate = order.OrderDate,
+               Total = order.Total(),
+               Items = order.OrderItems.Select(x=> new InvoiceItem{ 
+                 Id = x.ItemOrdered.CatalogItemId,
+                 Name = x.ItemOrdered.ProductName,
+                 Unit = x.Units,
+                 UnitPrice = x.UnitPrice,
+               }).ToList(),
+               ShippingAddress = new()
+               {
+                   Street = order.ShipToAddress.Street,
+                   City = order.ShipToAddress.City,
+                   State = order.ShipToAddress.State,
+                   Country = order.ShipToAddress.Country,
+                   ZipCode = order.ShipToAddress.ZipCode,
+               }
             };
-
-            // sent to queue
-            var json = JsonSerializer.Serialize(invoice, options: new JsonSerializerOptions() {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            });
-
+            
+            await _orderItemsReserver.ReserveOrderAsync(invoice)
+                .ConfigureAwait(false);
         }
         catch (EmptyBasketOnCheckoutException emptyBasketOnCheckoutException)
         {
