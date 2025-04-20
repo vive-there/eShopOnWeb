@@ -27,22 +27,24 @@ builder.Configuration
     .AddUserSecrets<Program>(optional: true)
     .AddEnvironmentVariables();
 
-if (builder.Environment.IsDevelopment() || builder.Environment.EnvironmentName == "Docker" || (builder.Configuration["UseOnlyInMemoryDatabase"] ?? "")=="true" ){
+if (true == false && ( builder.Environment.IsDevelopment() || builder.Environment.EnvironmentName == "Docker" || (builder.Configuration["UseOnlyInMemoryDatabase"] ?? "")=="true" )){
     // Configure SQL Server (local)
     Microsoft.eShopWeb.Infrastructure.Dependencies.ConfigureServices(builder.Configuration, builder.Services);
 }
 else{
     // Configure SQL Server (prod)
-    var credential = new ChainedTokenCredential(new AzureDeveloperCliCredential(), new DefaultAzureCredential());
-    builder.Configuration.AddAzureKeyVault(new Uri(builder.Configuration["AZURE_KEY_VAULT_ENDPOINT"] ?? ""), credential);
+    //var credential = new ChainedTokenCredential(new AzureDeveloperCliCredential(), new DefaultAzureCredential());
+    //builder.Configuration.AddAzureKeyVault(new Uri(builder.Configuration["AZURE_KEY_VAULT_ENDPOINT"] ?? ""), credential);
     builder.Services.AddDbContext<CatalogContext>(c =>
     {
-        var connectionString = builder.Configuration[builder.Configuration["AZURE_SQL_CATALOG_CONNECTION_STRING_KEY"] ?? ""];
+        //var connectionString = builder.Configuration[builder.Configuration["AZURE_SQL_CATALOG_CONNECTION_STRING_KEY"] ?? ""];
+        var connectionString = builder.Configuration["AZURE_SQL_CATALOG_CONNECTION_STRING"];
         c.UseSqlServer(connectionString, sqlOptions => sqlOptions.EnableRetryOnFailure());
     });
     builder.Services.AddDbContext<AppIdentityDbContext>(options =>
     {
-        var connectionString = builder.Configuration[builder.Configuration["AZURE_SQL_IDENTITY_CONNECTION_STRING_KEY"] ?? ""];
+        //var connectionString = builder.Configuration[builder.Configuration["AZURE_SQL_IDENTITY_CONNECTION_STRING_KEY"] ?? ""];
+        var connectionString = builder.Configuration["AZURE_SQL_CATALOG_CONNECTION_STRING"];
         options.UseSqlServer(connectionString, sqlOptions => sqlOptions.EnableRetryOnFailure());
     });
 }
@@ -103,12 +105,13 @@ var configSection = builder.Configuration.GetRequiredSection(BaseUrlConfiguratio
 builder.Services.Configure<BaseUrlConfiguration>(configSection);
 var baseUrlConfig = configSection.Get<BaseUrlConfiguration>();
 
-// Blazor Admin Required Services for Prerendering
-builder.Services.AddHttpClient<OrderItemsReserver>(client => 
-{
-    Console.WriteLine($"OrderItemsReserverBase: {baseUrlConfig!.OrderItemsReserverBase}");
-    client.BaseAddress = new Uri(baseUrlConfig!.OrderItemsReserverBase);
-});
+builder.Services.AddHttpClient();
+
+//builder.Services.AddHttpClient<OrderItemsReserver>(client => 
+//{
+//    Console.WriteLine($"OrderItemsReserverBase: {baseUrlConfig!.OrderItemsReserverBase}");
+//    client.BaseAddress = new Uri(baseUrlConfig!.OrderItemsReserverBase);
+//});
 
 
 // add blazor services

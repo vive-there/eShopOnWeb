@@ -21,7 +21,7 @@ public class CheckoutModel : PageModel
     private readonly IBasketService _basketService;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly IOrderService _orderService;
-    private readonly OrderItemsReserver _orderItemsReserver;
+    //private readonly OrderItemsReserver _orderItemsReserver;
     private string? _username = null;
     private readonly IBasketViewModelService _basketViewModelService;
     private readonly IAppLogger<CheckoutModel> _logger;
@@ -30,13 +30,13 @@ public class CheckoutModel : PageModel
         IBasketViewModelService basketViewModelService,
         SignInManager<ApplicationUser> signInManager,
         IOrderService orderService,
-        OrderItemsReserver orderItemsReserver,
+        //OrderItemsReserver orderItemsReserver,
         IAppLogger<CheckoutModel> logger)
     {
         _basketService = basketService;
         _signInManager = signInManager;
         _orderService = orderService;
-        _orderItemsReserver = orderItemsReserver;
+        //_orderItemsReserver = orderItemsReserver;
         _basketViewModelService = basketViewModelService;
         _logger = logger;
     }
@@ -85,8 +85,8 @@ public class CheckoutModel : PageModel
                }
             };
             
-            await _orderItemsReserver.ReserveOrderAsync(invoice)
-                .ConfigureAwait(false);
+            //await _orderItemsReserver.ReserveOrderAsync(invoice)
+            //    .ConfigureAwait(false);
         }
         catch (EmptyBasketOnCheckoutException emptyBasketOnCheckoutException)
         {
