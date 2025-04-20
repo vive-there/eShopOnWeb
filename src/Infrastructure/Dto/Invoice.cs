@@ -9,6 +9,7 @@ public class Invoice
 {
     public int Id { get; set; }
     public string CustomerId { get; set; } = string.Empty;
+    public string CustomerFirstLastName { get; set; } = string.Empty;
     public DateTimeOffset OrderedDate { get; set; }
     public decimal Total { get; set; }
     public List<InvoiceItem> Items { get; set; } = new List<InvoiceItem>();
