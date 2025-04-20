@@ -171,3 +171,9 @@ We have some great contributions from the community, and while these aren't main
 [eShopOnWeb VB.NET](https://github.com/VBAndCs/eShopOnWeb_VB.NET) by Mohammad Hamdy Ghanem
 
 [FShopOnWeb](https://github.com/NitroDevs/FShopOnWeb) An F# take on eShopOnWeb by Sean G. Wright and Kyle McMaster
+
+## sql
+
+Task 2:
+You have eShopOnWeb application which allows the customers to make the orders. The delivery service for the orders is provided by a delivery department. For now, there is no IT solution to manage their work and the customer is going to develop it as a separate service with a separate database. 
+You should design and implement the application (based on Function App with HttpTrigger) which allows to save the order details (shipping address, list of items and final price) after the order is created in CosmosDB so that later delivery department can use CosmosDB as the source to get orders for processing. 
