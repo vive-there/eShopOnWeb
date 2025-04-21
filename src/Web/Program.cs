@@ -113,6 +113,11 @@ builder.Services.AddHttpClient();
 //    client.BaseAddress = new Uri(baseUrlConfig!.OrderItemsReserverBase);
 //});
 
+builder.Services.AddHttpClient<DeliverySender>(client => {
+     Console.WriteLine($"DeliverySenderEndpoint: {baseUrlConfig!.DeliverySenderBase}");
+     client.BaseAddress = new Uri(baseUrlConfig!.DeliverySenderBase);
+});
+
 
 // add blazor services
 builder.Services.AddBlazoredLocalStorage();

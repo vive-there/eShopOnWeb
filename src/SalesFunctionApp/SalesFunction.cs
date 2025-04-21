@@ -20,7 +20,7 @@ namespace SalesFunctionApp;
 
 public class SalesFunction
 {
-    [Function("OrderItemsReserver")]
+    //[Function("OrderItemsReserver")]
     public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData req,
             FunctionContext executionContext)
     {

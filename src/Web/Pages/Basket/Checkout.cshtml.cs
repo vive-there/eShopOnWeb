@@ -10,8 +10,8 @@ using Microsoft.eShopWeb.ApplicationCore.Exceptions;
 using Microsoft.eShopWeb.ApplicationCore.Interfaces;
 using Microsoft.eShopWeb.Infrastructure.Identity;
 using Microsoft.eShopWeb.Web.Interfaces;
-using Microsoft.eShopWeb.Infrastructure.Dto;
 using Microsoft.eShopWeb.Infrastructure.Services;
+using InfrastructureDto.Dto;
 
 namespace Microsoft.eShopWeb.Web.Pages.Basket;
 
@@ -22,6 +22,7 @@ public class CheckoutModel : PageModel
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly IOrderService _orderService;
     //private readonly OrderItemsReserver _orderItemsReserver;
+    private readonly DeliverySender _deliverySender;
     private string? _username = null;
     private readonly IBasketViewModelService _basketViewModelService;
     private readonly IAppLogger<CheckoutModel> _logger;
@@ -31,12 +32,14 @@ public class CheckoutModel : PageModel
         SignInManager<ApplicationUser> signInManager,
         IOrderService orderService,
         //OrderItemsReserver orderItemsReserver,
+        DeliverySender deliverySender,
         IAppLogger<CheckoutModel> logger)
     {
         _basketService = basketService;
         _signInManager = signInManager;
         _orderService = orderService;
         //_orderItemsReserver = orderItemsReserver;
+        _deliverySender = deliverySender;
         _basketViewModelService = basketViewModelService;
         _logger = logger;
     }
@@ -65,12 +68,12 @@ public class CheckoutModel : PageModel
             await _basketService.DeleteBasketAsync(BasketModel.Id);
 
             var invoice = new Invoice{ 
-               Id = order.Id,
+               InvoiceId = order.Id,
                CustomerId = order.BuyerId,
                OrderedDate = order.OrderDate,
                Total = order.Total(),
                Items = order.OrderItems.Select(x=> new InvoiceItem{ 
-                 Id = x.ItemOrdered.CatalogItemId,
+                 ItemId = x.ItemOrdered.CatalogItemId,
                  Name = x.ItemOrdered.ProductName,
                  Unit = x.Units,
                  UnitPrice = x.UnitPrice,
@@ -87,6 +90,9 @@ public class CheckoutModel : PageModel
             
             //await _orderItemsReserver.ReserveOrderAsync(invoice)
             //    .ConfigureAwait(false);
+
+            await _deliverySender.SendInvoiceAsync(invoice)
+                .ConfigureAwait(false); 
         }
         catch (EmptyBasketOnCheckoutException emptyBasketOnCheckoutException)
         {

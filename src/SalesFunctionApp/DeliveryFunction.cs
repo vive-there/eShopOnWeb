@@ -12,6 +12,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
+using Microsoft.Azure.Cosmos;
+using InfrastructureDto.Dto;
 
 namespace SalesFunctionApp;
 
@@ -21,6 +23,7 @@ public class DeliveryFunction
     public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData req,
         FunctionContext executionContext)
     {
+
         ILogger<DeliveryFunction> logger = executionContext.InstanceServices.GetRequiredService<ILogger<DeliveryFunction>>();
         logger.LogInformation("SaveInvoice HTTP trigger function processed a request.");
 
@@ -36,26 +39,28 @@ public class DeliveryFunction
         }
         try
         {
-            //var config = executionContext.InstanceServices.GetRequiredService<IConfiguration>();
-            //var blobServiceClient = executionContext.InstanceServices.GetRequiredService<BlobServiceClient>();
-            //var containerClient = blobServiceClient.GetBlobContainerClient(config.GetValue<string>("SalesBlobContainer"));
-            //await containerClient.CreateIfNotExistsAsync();
 
+            var config = executionContext.InstanceServices.GetRequiredService<IConfiguration>();
 
-            //// Read the request body into dynamic object
-            //var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            //var json = JsonObject.Parse(requestBody);
+            CosmosClient cosmosClient = executionContext.InstanceServices.GetRequiredService<CosmosClient>();
+            var invoice = await JsonSerializer.DeserializeAsync<Invoice>(req.Body, new JsonSerializerOptions()
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            });
 
-            //await containerClient.UploadBlobAsync(
-            //    $"invoice-{json["id"]}_{Guid.NewGuid().ToString("n")}.json",
-            //    new BinaryData(Encoding.UTF8.GetBytes(requestBody))
-            //);
+            _ = invoice ?? throw new InvalidOperationException("Could not parse invoice");
+
+            var container = cosmosClient.GetContainer("Delivery", "Invoices");
+
+            await container.CreateItemAsync(invoice, new PartitionKey(invoice.InvoiceId));
+
 
             return req.CreateResponse(HttpStatusCode.OK);
 
         }
         catch (Exception e)
         {
+            logger.LogError($"SaveInvoice: {e.ToString()}");
             var errorResponse = req.CreateResponse(HttpStatusCode.InternalServerError);
             await errorResponse.WriteStringAsync(JsonSerializer.Serialize(new { message = e.Message }));
             errorResponse.Headers.Add("Content-Type", "application/json");
