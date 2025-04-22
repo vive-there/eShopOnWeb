@@ -39,12 +39,14 @@ else{
     {
         //var connectionString = builder.Configuration[builder.Configuration["AZURE_SQL_CATALOG_CONNECTION_STRING_KEY"] ?? ""];
         var connectionString = builder.Configuration["AZURE_SQL_CATALOG_CONNECTION_STRING"];
+        Console.WriteLine(connectionString);
         c.UseSqlServer(connectionString, sqlOptions => sqlOptions.EnableRetryOnFailure());
     });
     builder.Services.AddDbContext<AppIdentityDbContext>(options =>
     {
         //var connectionString = builder.Configuration[builder.Configuration["AZURE_SQL_IDENTITY_CONNECTION_STRING_KEY"] ?? ""];
         var connectionString = builder.Configuration["AZURE_SQL_CATALOG_CONNECTION_STRING"];
+        Console.WriteLine(connectionString);
         options.UseSqlServer(connectionString, sqlOptions => sqlOptions.EnableRetryOnFailure());
     });
 }
@@ -105,6 +107,7 @@ var configSection = builder.Configuration.GetRequiredSection(BaseUrlConfiguratio
 builder.Services.Configure<BaseUrlConfiguration>(configSection);
 var baseUrlConfig = configSection.Get<BaseUrlConfiguration>();
 
+// for blazor
 builder.Services.AddHttpClient();
 
 //builder.Services.AddHttpClient<OrderItemsReserver>(client => 
@@ -113,10 +116,10 @@ builder.Services.AddHttpClient();
 //    client.BaseAddress = new Uri(baseUrlConfig!.OrderItemsReserverBase);
 //});
 
-builder.Services.AddHttpClient<DeliverySender>(client => {
-     Console.WriteLine($"DeliverySenderEndpoint: {baseUrlConfig!.DeliverySenderBase}");
-     client.BaseAddress = new Uri(baseUrlConfig!.DeliverySenderBase);
-});
+//builder.Services.AddHttpClient<DeliverySender>(client => {
+//     Console.WriteLine($"DeliverySenderEndpoint: {baseUrlConfig!.DeliverySenderBase}");
+//     client.BaseAddress = new Uri(baseUrlConfig!.DeliverySenderBase);
+//});
 
 
 // add blazor services
