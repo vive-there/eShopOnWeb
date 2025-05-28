@@ -1,11 +1,4 @@
-﻿using Azure.Storage.Blobs;
-using System.Net;
-using System.Text.Json.Nodes;
-using System.Text;
-using System.Threading;
-
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using System.Net;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -54,9 +47,7 @@ public class DeliveryFunction
 
             await container.CreateItemAsync(invoice, new PartitionKey(invoice.InvoiceId));
 
-
             return req.CreateResponse(HttpStatusCode.OK);
-
         }
         catch (Exception e)
         {
@@ -66,6 +57,5 @@ public class DeliveryFunction
             errorResponse.Headers.Add("Content-Type", "application/json");
             return errorResponse;
         }
-
     }
 }

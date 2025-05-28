@@ -1,6 +1,5 @@
 ﻿using System.Net.Mime;
 using Ardalis.ListStartupServices;
-using Azure.Identity;
 using BlazorAdmin;
 using BlazorAdmin.Services;
 using Blazored.LocalStorage;
@@ -18,7 +17,6 @@ using Microsoft.eShopWeb.Infrastructure.Services;
 using Microsoft.eShopWeb.Web;
 using Microsoft.eShopWeb.Web.Configuration;
 using Microsoft.eShopWeb.Web.HealthChecks;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -27,24 +25,27 @@ builder.Configuration
     .AddUserSecrets<Program>(optional: true)
     .AddEnvironmentVariables();
 
-if (true == false && ( builder.Environment.IsDevelopment() || builder.Environment.EnvironmentName == "Docker" || (builder.Configuration["UseOnlyInMemoryDatabase"] ?? "")=="true" )){
+bool useOnlyInMemoryDatabase = false;
+if (builder.Configuration["UseOnlyInMemoryDatabase"] != null)
+{
+    useOnlyInMemoryDatabase = bool.Parse(builder.Configuration["UseOnlyInMemoryDatabase"]!);
+}
+
+if (useOnlyInMemoryDatabase)
+{ 
     // Configure SQL Server (local)
     Microsoft.eShopWeb.Infrastructure.Dependencies.ConfigureServices(builder.Configuration, builder.Services);
 }
-else{
-    // Configure SQL Server (prod)
-    //var credential = new ChainedTokenCredential(new AzureDeveloperCliCredential(), new DefaultAzureCredential());
-    //builder.Configuration.AddAzureKeyVault(new Uri(builder.Configuration["AZURE_KEY_VAULT_ENDPOINT"] ?? ""), credential);
+else
+{
     builder.Services.AddDbContext<CatalogContext>(c =>
     {
-        //var connectionString = builder.Configuration[builder.Configuration["AZURE_SQL_CATALOG_CONNECTION_STRING_KEY"] ?? ""];
         var connectionString = builder.Configuration["AZURE_SQL_CATALOG_CONNECTION_STRING"];
         Console.WriteLine(connectionString);
         c.UseSqlServer(connectionString, sqlOptions => sqlOptions.EnableRetryOnFailure());
     });
     builder.Services.AddDbContext<AppIdentityDbContext>(options =>
     {
-        //var connectionString = builder.Configuration[builder.Configuration["AZURE_SQL_IDENTITY_CONNECTION_STRING_KEY"] ?? ""];
         var connectionString = builder.Configuration["AZURE_SQL_CATALOG_CONNECTION_STRING"];
         Console.WriteLine(connectionString);
         options.UseSqlServer(connectionString, sqlOptions => sqlOptions.EnableRetryOnFailure());
@@ -107,20 +108,14 @@ var configSection = builder.Configuration.GetRequiredSection(BaseUrlConfiguratio
 builder.Services.Configure<BaseUrlConfiguration>(configSection);
 var baseUrlConfig = configSection.Get<BaseUrlConfiguration>();
 
-// for blazor
 builder.Services.AddHttpClient();
+builder.Services.AddHttpClient<DeliverySender>(client =>
+{
+    Console.WriteLine($"DeliverySenderEndpoint: {baseUrlConfig!.DeliverySenderBase}");
+    client.BaseAddress = new Uri(baseUrlConfig!.DeliverySenderBase);
+});
 
-//builder.Services.AddHttpClient<OrderItemsReserver>(client => 
-//{
-//    Console.WriteLine($"OrderItemsReserverBase: {baseUrlConfig!.OrderItemsReserverBase}");
-//    client.BaseAddress = new Uri(baseUrlConfig!.OrderItemsReserverBase);
-//});
-
-//builder.Services.AddHttpClient<DeliverySender>(client => {
-//     Console.WriteLine($"DeliverySenderEndpoint: {baseUrlConfig!.DeliverySenderBase}");
-//     client.BaseAddress = new Uri(baseUrlConfig!.DeliverySenderBase);
-//});
-
+builder.Services.AddScoped<OrderItemsReserverSender>();
 
 // add blazor services
 builder.Services.AddBlazoredLocalStorage();

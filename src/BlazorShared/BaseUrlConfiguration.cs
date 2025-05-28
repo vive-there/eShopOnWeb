@@ -6,6 +6,5 @@ public class BaseUrlConfiguration
 
     public string ApiBase { get; set; }
     public string WebBase { get; set; }
-    public string OrderItemsReserverBase { get; set; }
     public string DeliverySenderBase { get; set; }
 }
